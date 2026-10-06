@@ -1,7 +1,5 @@
 # Static Keyword in C++
 
-
-
 The `static` keyword is used to give a variable or function a **special lifetime or ownership behavior**.
 
 In classes, `static` members belong to the **class itself**, rather than to individual objects.
