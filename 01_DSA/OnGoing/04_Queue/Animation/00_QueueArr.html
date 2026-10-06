@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Normal Queue Using Array — Interactive Visualizer</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:#f5f7fb;color:#172033}
+.container{max-width:1150px;margin:auto;padding:24px}
+h1{margin:0 0 5px;font-size:30px}
+.subtitle{color:#667085;margin-bottom:20px}
+.panel{background:white;border:1px solid #dfe4ec;border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 4px 15px #1720330b}
+.controls{display:flex;flex-wrap:wrap;gap:9px;align-items:end}
+label{font-size:13px;color:#667085;font-weight:600;display:block;margin-bottom:5px}
+input{width:95px;padding:10px;border:1px solid #cbd2dc;border-radius:8px;font-size:15px}
+button{border:0;border-radius:8px;padding:10px 14px;font-weight:700;cursor:pointer;background:#1f6feb;color:#fff}
+button.secondary{background:#eef2f7;color:#172033}
+button.danger{background:#d92d20}
+button:disabled{opacity:.45;cursor:not-allowed}
+.queue-wrap{overflow-x:auto;padding:50px 4px}
+.queue{display:flex;gap:8px;min-width:650px;justify-content:center}
+.cell{width:105px;height:105px;border:2px solid #b9c2d0;border-radius:12px;position:relative;background:#f9fafb;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;transition:.35s}
+.cell.occupied{background:#eaf3ff;border-color:#3788ff}
+.cell.active{transform:translateY(-8px);box-shadow:0 10px 20px #1f6feb33;border-color:#1f6feb}
+.cell.deleted{background:#fff1f0;border-color:#f04438}
+.index{position:absolute;bottom:6px;font-size:12px;color:#667085}
+.ptr{position:absolute;top:-29px;font-size:12px;font-weight:800;padding:3px 6px;border-radius:5px;color:white}
+.front{background:#16a34a}
+.rear{background:#9333ea}
+.ptrline{height:30px;position:relative;min-width:650px}
+.status{font-weight:700;padding:11px 14px;border-radius:9px;background:#f2f4f7}
+.status.ok{background:#ecfdf3;color:#027a48}.status.err{background:#fff1f0;color:#b42318}
+.vars{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.var{background:#f8fafc;border:1px solid #e5e7eb;border-radius:9px;padding:12px}
+.var b{display:block;color:#667085;font-size:12px;margin-bottom:4px}
+.var span{font-size:21px;font-weight:800}
+.steps{min-height:50px;line-height:1.5}
+.explain{font-size:16px}
+.code{background:#111827;color:#e5e7eb;border-radius:10px;padding:16px;overflow:auto;font-family:Consolas,monospace;font-size:13px;line-height:1.55;white-space:pre}
+.pseudo{display:none}
+.pseudo.show{display:block}
+.legend{display:flex;gap:15px;flex-wrap:wrap;font-size:13px;color:#667085}
+.dot{width:12px;height:12px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:-2px}
+@media(max-width:700px){.vars{grid-template-columns:1fr}.cell{width:82px;height:82px}.queue,.ptrline{min-width:560px}}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Queue Using Array — Normal Queue</h1>
+  <div class="subtitle">FIFO: First In, First Out • Capacity = 5 • Linear / non-circular queue</div>
+
+  <div class="panel">
+    <div class="controls">
+      <div>
+        <label>Value</label>
+        <input id="value" type="number" value="10">
+      </div>
+      <button onclick="enqueue()">Enqueue</button>
+      <button onclick="dequeue()">Dequeue</button>
+      <button onclick="getFront()">Get Front</button>
+      <button onclick="getRear()">Get Rear</button>
+      <button onclick="display()">Display</button>
+      <button class="secondary" onclick="reset()">Reset</button>
+      <button class="secondary" onclick="demo()">Run Demo</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div id="status" class="status">Queue is empty. front = -1, rear = -1</div>
+    <div class="queue-wrap">
+      <div id="queue" class="queue"></div>
+    </div>
+    <div class="legend">
+      <span><i class="dot" style="background:#eaf3ff"></i>Occupied</span>
+      <span><i class="dot" style="background:#fff1f0"></i>Deleted/currently freed</span>
+      <span>🟢 front</span><span>🟣 rear</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>Live Variables</h3>
+    <div class="vars">
+      <div class="var"><b>max_size</b><span>5</span></div>
+      <div class="var"><b>front</b><span id="front">-1</span></div>
+      <div class="var"><b>rear</b><span id="rear">-1</span></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>What the code is doing</h3>
+    <div id="explain" class="explain">Choose an operation to see the execution steps.</div>
+    <div id="steps" class="steps"></div>
+  </div>
+
+  <div class="panel pseudo" id="pseudo">
+    <h2>Pseudocode — Normal Queue Using Array</h2>
+    <div class="code">ENQUEUE(value)
+    IF rear == max_size - 1
+        PRINT "Queue overflow"
+        RETURN
+
+    IF front == -1
+        front = front + 1
+
+    rear = rear + 1
+    queue[rear] = value
+
+
+DEQUEUE()
+    IF front == -1
+        PRINT "Queue Underflow"
+        RETURN
+
+    deletedEle = queue[front]
+    PRINT deletedEle
+
+    IF front == rear
+        front = -1
+        rear = -1
+        RETURN
+
+    front = front + 1
+
+
+GET_FRONT()
+    IF front == -1
+        PRINT "Queue Underflow"
+        RETURN
+
+    PRINT queue[front]
+
+
+GET_REAR()
+    IF front == -1
+        PRINT "Queue Underflow"
+        RETURN
+
+    PRINT queue[rear]
+
+
+DISPLAY()
+    IF front == -1
+        PRINT "Queue Underflow"
+        RETURN
+
+    FOR i = front TO rear
+        PRINT queue[i]</div>
+  </div>
+</div>
+
+<script>
+const CAP=5;
+let q=Array(CAP).fill(null), front=-1, rear=-1;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function render(active=-1, deleted=-1){
+  const el=document.getElementById("queue"); el.innerHTML="";
+  for(let i=0;i<CAP;i++){
+    const c=document.createElement("div");
+    c.className="cell "+(q[i]!==null?"occupied ":"")+(i===active?"active ":"")+(i===deleted?"deleted":"");
+    c.innerHTML=(q[i]===null?"":q[i])+`<span class="index">index ${i}</span>`;
+    if(i===front && front!==-1){let p=document.createElement("div");p.className="ptr front";p.textContent="front";c.appendChild(p)}
+    if(i===rear && rear!==-1){let p=document.createElement("div");p.className="ptr rear";p.textContent="rear";c.appendChild(p)}
+    el.appendChild(c);
+  }
+  document.getElementById("front").textContent=front;
+  document.getElementById("rear").textContent=rear;
+}
+function status(msg,good=true){
+ const s=document.getElementById("status");s.textContent=msg;s.className="status "+(good?"ok":"err");
+}
+function explain(title, lines){
+ document.getElementById("explain").innerHTML="<b>"+title+"</b>";
+ document.getElementById("steps").innerHTML=lines.map((x,i)=>`<div>Step ${i+1}: ${x}</div>`).join("");
+}
+function showPseudo(){document.getElementById("pseudo").classList.add("show")}
+async function enqueue(){
+ let val=Number(document.getElementById("value").value);
+ if(rear===CAP-1){
+  status("Queue overflow — rear == max_size - 1",false);
+  explain("ENQUEUE("+val+") stopped",["rear is already at index 4","No insertion is performed"]);
+  showPseudo(); return;
+ }
+ let lines=[];
+ lines.push("Check: rear == max_size - 1 → false");
+ if(front===-1){lines.push("Queue is empty, so front becomes 0");front++}
+ lines.push("rear is incremented");
+ rear++; render(rear);
+ await sleep(250);
+ q[rear]=val; render(rear);
+ lines.push("queue["+rear+"] = "+val);
+ status("Inserted "+val+" at index "+rear);
+ explain("ENQUEUE("+val+")",lines);showPseudo();
+}
+async function dequeue(){
+ if(front===-1){
+  status("Queue underflow — queue is empty",false);
+  explain("DEQUEUE() stopped",["front == -1, so there is no element to delete"]);
+  showPseudo(); return;
+ }
+ let deleted=q[front], old=front, lines=[];
+ lines.push("Read queue["+front+"] = "+deleted);
+ render(front);
+ await sleep(350);
+ q[front]=null; render(-1,old);
+ lines.push("Deleted element = "+deleted);
+ if(front===rear){
+  lines.push("front == rear, so this was the last element");
+  front=-1;rear=-1;render();
+  lines.push("Set front = -1 and rear = -1");
+ }else{
+  front++;
+  lines.push("front is incremented to "+front);
+  render();
+ }
+ status("Deleted element: "+deleted);
+ explain("DEQUEUE()",lines);showPseudo();
+}
+function getFront(){
+ if(front===-1){status("Queue underflow — queue is empty",false);explain("GET_FRONT() stopped",["front == -1"]);showPseudo();return}
+ render(front);status("Front Element: "+q[front]);explain("GET_FRONT()",["front != -1","Read queue[front]","Front Element = "+q[front]]);showPseudo();
+}
+function getRear(){
+ if(front===-1){status("Queue underflow — queue is empty",false);explain("GET_REAR() stopped",["front == -1"]);showPseudo();return}
+ render(rear);status("Rear Element: "+q[rear]);explain("GET_REAR()",["front != -1","Read queue[rear]","Rear Element = "+q[rear]]);showPseudo();
+}
+function display(){
+ if(front===-1){status("Queue underflow — queue is empty",false);explain("DISPLAY() stopped",["front == -1"]);showPseudo();return}
+ let vals=[]; for(let i=front;i<=rear;i++) vals.push(q[i]);
+ render();status("Queue Elements: "+vals.join(" "));
+ explain("DISPLAY()",["Start i = front ("+front+")","Traverse while i <= rear ("+rear+")","Elements = "+vals.join(" → ")]);showPseudo();
+}
+function reset(){
+ q=Array(CAP).fill(null);front=-1;rear=-1;render();
+ status("Queue reset. front = -1, rear = -1");
+ explain("RESET",["All cells are empty","front = -1","rear = -1"]);
+ document.getElementById("pseudo").classList.remove("show");
+}
+async function demo(){
+ reset(); await sleep(500);
+ for(const v of [10,20,30]){document.getElementById("value").value=v;await enqueue();await sleep(500)}
+ await dequeue();await sleep(500);
+ document.getElementById("value").value=40;await enqueue();await sleep(500);
+ document.getElementById("value").value=50;await enqueue();await sleep(500);
+ document.getElementById("value").value=60;await enqueue();
+}
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Queue Using Linked List — Interactive Visualizer</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:#f5f7fb;color:#172033}
+.container{max-width:1200px;margin:auto;padding:24px}
+h1{margin:0 0 5px;font-size:30px}.subtitle{color:#667085;margin-bottom:20px}
+.panel{background:#fff;border:1px solid #dfe4ec;border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 4px 15px #1720330b}
+.controls{display:flex;flex-wrap:wrap;gap:9px;align-items:end}
+label{font-size:13px;color:#667085;font-weight:600;display:block;margin-bottom:5px}
+input{width:100px;padding:10px;border:1px solid #cbd2dc;border-radius:8px;font-size:15px}
+button{border:0;border-radius:8px;padding:10px 14px;font-weight:700;cursor:pointer;background:#1f6feb;color:white}
+button.secondary{background:#eef2f7;color:#172033}
+button.danger{background:#d92d20}
+.status{font-weight:700;padding:11px 14px;border-radius:9px;background:#f2f4f7;margin-bottom:20px}
+.ok{background:#ecfdf3;color:#027a48}.err{background:#fff1f0;color:#b42318}
+.visual{overflow-x:auto;padding:45px 15px 55px;min-height:210px}
+.nodes{display:flex;align-items:center;justify-content:center;min-width:720px}
+.node-wrap{display:flex;align-items:center}
+.node{width:135px;height:90px;border:2px solid #3788ff;border-radius:12px;background:#eaf3ff;position:relative;display:grid;grid-template-columns:1fr 48px;overflow:visible;transition:.35s}
+.node.active{transform:translateY(-9px);box-shadow:0 12px 24px #1f6feb33}
+.node.deleted{background:#fff1f0;border-color:#f04438;transform:scale(.95)}
+.data{display:flex;align-items:center;justify-content:center;font-size:25px;font-weight:800}
+.next{border-left:2px solid #3788ff;display:flex;align-items:center;justify-content:center;font-size:12px;font-family:Consolas,monospace;color:#475467}
+.arrow{font-size:30px;color:#667085;margin:0 10px}
+.pointer-row{position:absolute;top:-39px;left:50%;transform:translateX(-50%);display:flex;gap:5px;white-space:nowrap}
+.pointer{padding:5px 8px;border-radius:6px;color:#fff;font-size:12px;font-weight:800}
+.front{background:#16a34a}.rear{background:#9333ea}
+.nullbox{border:2px dashed #98a2b3;border-radius:10px;padding:16px 22px;color:#667085;font-weight:700}
+.meta{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.meta-card{background:#f8fafc;border:1px solid #e5e7eb;border-radius:9px;padding:12px}
+.meta-card b{display:block;color:#667085;font-size:12px;margin-bottom:5px}.meta-card span{font-size:19px;font-weight:800}
+.explain{font-size:16px;line-height:1.55}.steps{margin-top:10px;line-height:1.55}
+.code{background:#111827;color:#e5e7eb;border-radius:10px;padding:16px;overflow:auto;font-family:Consolas,monospace;font-size:13px;line-height:1.55;white-space:pre}
+.pseudo{display:none}.pseudo.show{display:block}
+.legend{display:flex;gap:15px;flex-wrap:wrap;color:#667085;font-size:13px}
+.badge{display:inline-block;padding:4px 7px;border-radius:5px;color:#fff;font-weight:700}.green{background:#16a34a}.purple{background:#9333ea}
+@media(max-width:700px){.meta{grid-template-columns:1fr 1fr}.node{width:110px}.nodes{min-width:650px}}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Queue Using Linked List</h1>
+<div class="subtitle">FIFO • Dynamic memory • Each node contains <b>data</b> + <b>next</b></div>
+
+<div class="panel">
+<div class="controls">
+<div><label>Value</label><input id="value" type="number" value="10"></div>
+<button onclick="enqueue()">Enqueue</button>
+<button onclick="dequeue()">Dequeue</button>
+<button onclick="getFront()">Get Front</button>
+<button onclick="getRear()">Get Rear</button>
+<button onclick="display()">Display</button>
+<button class="secondary" onclick="reset()">Reset</button>
+<button class="secondary" onclick="demo()">Run Demo</button>
+</div>
+</div>
+
+<div class="panel">
+<div id="status" class="status">Queue is empty: front = nullptr, rear = nullptr</div>
+<div class="visual"><div id="nodes" class="nodes"></div></div>
+<div class="legend">
+<span><span class="badge green">front</span> points to first node</span>
+<span><span class="badge purple">rear</span> points to last node</span>
+<span>Each node: <b>data | next</b></span>
+</div>
+</div>
+
+<div class="panel">
+<h3>Live Pointers & State</h3>
+<div class="meta">
+<div class="meta-card"><b>front</b><span id="front">nullptr</span></div>
+<div class="meta-card"><b>rear</b><span id="rear">nullptr</span></div>
+<div class="meta-card"><b>Node count</b><span id="count">0</span></div>
+<div class="meta-card"><b>Last next</b><span id="lastnext">nullptr</span></div>
+</div>
+</div>
+
+<div class="panel">
+<h3>What the code is doing</h3>
+<div id="explain" class="explain">Choose an operation to see the pointer changes.</div>
+<div id="steps" class="steps"></div>
+</div>
+
+<div class="panel pseudo" id="pseudo">
+<h2>Pseudocode — Queue Using Linked List</h2>
+<div class="code">ENQUEUE(value)
+    newNode = new Node(value)
+
+    IF front == nullptr AND rear == nullptr
+        front = newNode
+        rear = newNode
+        RETURN
+
+    rear.next = newNode
+    rear = newNode
+
+
+DEQUEUE()
+    IF front == nullptr AND rear == nullptr
+        PRINT "Queue Underflow"
+        RETURN
+
+    deleteNode = front
+    front = front.next
+
+    IF front == nullptr
+        rear = nullptr
+
+    DELETE deleteNode
+
+
+GET_FRONT()
+    IF front == nullptr
+        PRINT "Queue Underflow"
+        RETURN
+
+    PRINT front.data
+
+
+GET_REAR()
+    IF rear == nullptr
+        PRINT "Queue Underflow"
+        RETURN
+
+    PRINT rear.data
+
+
+DISPLAY()
+    IF front == nullptr AND rear == nullptr
+        PRINT "Queue Underflow"
+        RETURN
+
+    curNode = front
+
+    WHILE curNode != nullptr
+        PRINT curNode.data
+        curNode = curNode.next</div>
+</div>
+</div>
+
+<script>
+let nodes=[],counter=0;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function newNode(val){counter++;return{id:counter,data:val,next:null}}
+function render(active=null,deleted=null){
+ const el=document.getElementById("nodes");el.innerHTML="";
+ if(nodes.length===0){el.innerHTML='<div class="nullbox">front → nullptr &nbsp;&nbsp; rear → nullptr</div>'}
+ else{
+  nodes.forEach((n,idx)=>{
+   const wrap=document.createElement("div");wrap.className="node-wrap";
+   const d=document.createElement("div");
+   d.className="node "+(n===active?"active ":"")+(n===deleted?"deleted":"");
+   let pointers="";
+   if(idx===0)pointers+='<span class="pointer front">front</span>';
+   if(idx===nodes.length-1)pointers+='<span class="pointer rear">rear</span>';
+   d.innerHTML=`<div class="pointer-row">${pointers}</div><div class="data">${n.data}</div><div class="next">${n.next===null?"nullptr":"→"}</div>`;
+   wrap.appendChild(d);
+   if(idx<nodes.length-1){
+    const a=document.createElement("div");a.className="arrow";a.textContent="→";wrap.appendChild(a);
+   }else{
+    const a=document.createElement("div");a.className="arrow";a.textContent="→ nullptr";wrap.appendChild(a);
+   }
+   el.appendChild(wrap);
+  })
+ }
+ document.getElementById("front").textContent=nodes.length?`Node #${nodes[0].id}`:"nullptr";
+ document.getElementById("rear").textContent=nodes.length?`Node #${nodes[nodes.length-1].id}`:"nullptr";
+ document.getElementById("count").textContent=nodes.length;
+ document.getElementById("lastnext").textContent="nullptr";
+}
+function status(msg,good=true){let s=document.getElementById("status");s.textContent=msg;s.className="status "+(good?"ok":"err")}
+function explain(title,lines){document.getElementById("explain").innerHTML="<b>"+title+"</b>";document.getElementById("steps").innerHTML=lines.map((x,i)=>`<div>Step ${i+1}: ${x}</div>`).join("")}
+function showPseudo(){document.getElementById("pseudo").classList.add("show")}
+
+async function enqueue(){
+ const val=Number(document.getElementById("value").value), n=newNode(val), lines=[];
+ lines.push("Create a new node using new queueNode("+val+")");
+ render(n);await sleep(350);
+ if(nodes.length===0){
+  lines.push("front == nullptr AND rear == nullptr → true");
+  lines.push("Set front = newNode");
+  nodes.push(n);render(n);await sleep(300);
+  lines.push("Set rear = newNode");
+ }else{
+  lines.push("Queue is not empty");
+  const old=nodes[nodes.length-1];lines.push("rear currently points to Node #"+old.id);
+  old.next=n.id;lines.push("rear->next = newNode");
+  nodes.push(n);render(n);await sleep(300);
+  lines.push("rear = newNode");
+ }
+ render();
+ status("Enqueued "+val+" — Node #"+n.id+" added at rear");
+ explain("ENQUEUE("+val+")",lines);showPseudo();
+}
+async function dequeue(){
+ if(nodes.length===0){status("Queue underflow — front == nullptr",false);explain("DEQUEUE() stopped",["Queue is empty"]);showPseudo();return}
+ const old=nodes[0],lines=[];
+ lines.push("deleteNode = front → Node #"+old.id);
+ render(old);await sleep(400);
+ lines.push("front = front->next");
+ nodes.shift();
+ if(nodes.length===0){
+  lines.push("front == nullptr, so rear = nullptr");
+ }else{
+  lines.push("front now points to Node #"+nodes[0].id);
+ }
+ render(null,old);await sleep(300);render();
+ lines.push("delete deleteNode");
+ status("Deleted Node #"+old.id+" — value "+old.data);
+ explain("DEQUEUE()",lines);showPseudo();
+}
+function getFront(){
+ if(!nodes.length){status("Queue underflow — front == nullptr",false);explain("GET_FRONT() stopped",["front == nullptr"]);showPseudo();return}
+ render(nodes[0]);status("Front data: "+nodes[0].data);explain("GET_FRONT()",["front != nullptr","Read front->data","Front data = "+nodes[0].data]);showPseudo()
+}
+function getRear(){
+ if(!nodes.length){status("Queue underflow — rear == nullptr",false);explain("GET_REAR() stopped",["rear == nullptr"]);showPseudo();return}
+ render(nodes[nodes.length-1]);status("Rear data: "+nodes[nodes.length-1].data);explain("GET_REAR()",["rear != nullptr","Read rear->data","Rear data = "+nodes[nodes.length-1].data]);showPseudo()
+}
+function display(){
+ if(!nodes.length){status("Queue underflow — queue is empty",false);explain("DISPLAY() stopped",["front == nullptr AND rear == nullptr"]);showPseudo();return}
+ let cur=0,vals=[];while(cur<nodes.length){vals.push(nodes[cur].data);cur++}
+ render();status("Elements in queue: "+vals.join(" → "));explain("DISPLAY()",["curNode = front","Traverse node by node using curNode = curNode->next","Stop at nullptr","Elements = "+vals.join(" → ")]);showPseudo()
+}
+function reset(){nodes=[];render();status("Queue reset: front = nullptr, rear = nullptr");explain("RESET",["All dynamically allocated nodes are removed from the visualization","front = nullptr","rear = nullptr"]);document.getElementById("pseudo").classList.remove("show")}
+async function demo(){
+ reset();await sleep(400);
+ for(const v of [10,20,30]){document.getElementById("value").value=v;await enqueue();await sleep(450)}
+ await dequeue();await sleep(500);
+ document.getElementById("value").value=40;await enqueue();await sleep(500);
+ await dequeue();
+}
+render();
+</script>
+</body>
+</html>
