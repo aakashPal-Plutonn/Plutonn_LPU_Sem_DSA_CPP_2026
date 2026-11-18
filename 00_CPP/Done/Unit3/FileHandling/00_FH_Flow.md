@@ -15,7 +15,6 @@
 │   ├── open() Function
 │   ├── close() Function
 │   ├── Checking Whether a File Opened Successfully -> is_open()
-
 │
 │
 │
@@ -98,4 +97,4 @@
 │   ├── Reading Class Objects from Files 
 │   ├── Classes and Binary Files 
 │   ├── File Operations Using Member Functions 
-│   └── File Handling with Array of Objects 
+│   └── File Handling with Array of Objects
