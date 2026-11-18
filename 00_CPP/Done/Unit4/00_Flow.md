@@ -38,8 +38,6 @@
 
 │   ├── Overloading Stream Insertion (<<)
 │   ├── Overloading Stream Extraction (>>)
-│   ├── Overloading []
-│   └── Overloading ()
 │
 ├── Type Conversion Fundamentals
 │   ├── Introduction to Type Conversion
